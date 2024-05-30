@@ -1,0 +1,6 @@
+bucket = "tf-maosproject"
+key    = "iac.tfstate"
+region = "us-east-1"
+encrypt = true
+workspace_key_prefix = "mp-api"
+dynamodb_table = "tf-locks-mp-api"
