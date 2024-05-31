@@ -211,14 +211,3 @@ variable "cluster_name" {
   type        = string
   description = "Name of the cluster to create"
 }
-
-variable "pub_ssh_key" {
-  type        = string
-  description = "Will be used to ssh into the bastion host"
-
-}
-
-variable "grafana_password" {
-  type        = string
-  description = "Grafana Password"
-}
