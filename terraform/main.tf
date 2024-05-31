@@ -7,29 +7,29 @@ module "vpc" {
   version = "~> 5.0"
 
   name                 = "${var.environment}-vpc"
-  cidr                 = "${lookup(var.cidr_ab, var.environment)}.0.0/16"
+  cidr                 = local.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
   instance_tenancy     = "default"
 
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
-  intra_subnets   = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 52)]
+  azs             = local.azs
+  private_subnets = [for k in range(length(local.azs)) : cidrsubnet(local.vpc_cidr, 8, k)]
+  public_subnets  = [for k in range(length(local.azs)) : cidrsubnet(local.vpc_cidr, 8, k + length(local.azs))]
+  intra_subnets   = [for k in range(length(local.azs)) : cidrsubnet(local.vpc_cidr, 8, k + 2 * length(local.azs))]
 
-  azs = local.azs
 
-  # create_database_nat_gateway_route = var.create_database_nat_gateway_route
+
   enable_nat_gateway = var.enable_nat_gateway
   nat_gateway_tags   = var.tags
   single_nat_gateway = true
 
-  enable_ipv6        = true
-  public_subnet_ipv6_prefixes                    = [0, 1, 2]
-  public_subnet_assign_ipv6_address_on_creation  = true
-  private_subnet_ipv6_prefixes                   = [3, 4, 5]
-  private_subnet_assign_ipv6_address_on_creation = true
-  intra_subnet_ipv6_prefixes                     = [6, 7, 8]
-  intra_subnet_assign_ipv6_address_on_creation   = true
+  enable_ipv6 = false
+  # public_subnet_assign_ipv6_address_on_creation  = true
+  # private_subnet_assign_ipv6_address_on_creation = true
+  # intra_subnet_assign_ipv6_address_on_creation   = true
+  # public_subnet_ipv6_prefixes                    = range(0, length(local.azs))
+  # private_subnet_ipv6_prefixes                   = range(length(local.azs) * 1, length(local.azs) * 2)
+  # intra_subnet_ipv6_prefixes                     = range(length(local.azs) * 2, length(local.azs) * 3)
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = "1"
@@ -52,7 +52,7 @@ module "eks" {
   source                         = "terraform-aws-modules/eks/aws"
   version                        = "~>20.0"
   cluster_version                = local.cluster_version
-  cluster_name                   = var.cluster_name
+  cluster_name                   = "${var.cluster_name}-${var.environment}"
   cluster_endpoint_public_access = true
 
   subnet_ids               = module.vpc.private_subnets
@@ -262,7 +262,7 @@ provider "kubernetes" {
 
 module "key_pair" {
   source  = "terraform-aws-modules/key-pair/aws"
-  version = "~> 2.0"
+  version = "~> 2.0.3"
 
   key_name_prefix    = local.name
   create_private_key = true
@@ -272,7 +272,7 @@ module "key_pair" {
 
 module "ebs_kms_key" {
   source  = "terraform-aws-modules/kms/aws"
-  version = "~> 2.1"
+  version = "~> 3.0.0"
 
   description = "Customer managed key to encrypt EKS managed node group volumes"
 
@@ -282,14 +282,14 @@ module "ebs_kms_key" {
   ]
 
   key_service_roles_for_autoscaling = [
-    # required for the ASG to manage encrypted volumes for nodes
+    # Required for the ASG to manage encrypted volumes for nodes
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
-    # required for the cluster / persistentvolume-controller to create encrypted PVCs
+    # Required for the cluster / persistentvolume-controller to create encrypted PVCs
     module.eks.cluster_iam_role_arn,
   ]
 
   # Aliases
-  aliases = ["eks/${local.name}/ebs"]
+  aliases = ["eks/${var.cluster_name}/ebs"]
 
   tags = var.tags
 }

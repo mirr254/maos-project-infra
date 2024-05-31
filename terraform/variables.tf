@@ -38,15 +38,6 @@ variable "tags" {
 
 }
 
-variable "cidr_ab" {
-  type = map(any)
-  default = {
-    development = "172.22",
-    staging     = "172.23",
-    production  = "172.24"
-  }
-}
-
 variable "environment" {
   type        = string
   description = "Options: development, staging, production"
@@ -219,7 +210,6 @@ variable "map_users" {
 variable "cluster_name" {
   type        = string
   description = "Name of the cluster to create"
-  default     = "seventhave-production-cluster"
 }
 
 variable "pub_ssh_key" {
