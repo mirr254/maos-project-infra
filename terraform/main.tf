@@ -91,44 +91,19 @@ module "eks" {
   eks_managed_node_groups = {
 
     # Default node group - as provided by AWS EKS
-    default_node_group = {
-      # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
-      # so we need to disable it to use the default template provided by the AWS EKS managed node group service
-      use_custom_launch_template = false
+    # default_node_group = {
+    #   # By default, the module creates a launch template to ensure tags are propagated to instances, etc.,
+    #   # so we need to disable it to use the default template provided by the AWS EKS managed node group service
+    #   use_custom_launch_template = false
 
-      disk_size = 50
+    #   disk_size = 50
 
-      # Remote access cannot be specified with a launch template
-      remote_access = {
-        ec2_ssh_key               = module.key_pair.key_pair_name
-        source_security_group_ids = [module.remote_access.security_group_id]
-      }
-    }
-
-    # AL2023 node group utilizing new user data format which utilizes nodeadm
-    # to join nodes to the cluster (instead of /etc/eks/bootstrap.sh)
-    al2023_nodeadm = {
-      ami_type = "AL2023_x86_64_STANDARD"
-
-      use_latest_ami_release_version = true
-
-      cloudinit_pre_nodeadm = [
-        {
-          content_type = "application/node.eks.aws"
-          content      = <<-EOT
-            ---
-            apiVersion: node.eks.aws/v1alpha1
-            kind: NodeConfig
-            spec:
-              kubelet:
-                config:
-                  shutdownGracePeriod: 30s
-                  featureGates:
-                    DisableKubeletCloudCredentialProviders: true
-          EOT
-        }
-      ]
-    }
+    #   # Remote access cannot be specified with a launch template
+    #   remote_access = {
+    #     ec2_ssh_key               = module.key_pair.key_pair_name
+    #     source_security_group_ids = [module.remote_access.security_group_id]
+    #   }
+    # }
 
     complete = {
       name            = "complete-eks-mng"
