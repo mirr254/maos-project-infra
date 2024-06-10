@@ -1,4 +1,4 @@
-eks_node_instance_types  = ["t3.medium"]
+eks_node_instance_types  = ["t3.small"]
 eks_node_capacity_type  = "SPOT"
 region                  = "us-east-1"
 eks_asg_desired_capacity = 1
