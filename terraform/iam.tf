@@ -1,5 +1,5 @@
 resource "aws_iam_role" "lambda_execution_role" {
-  name = "${var.project_name}-lambda-execution-role"
+  name = "${var.environment}-${var.project_name}-lambda-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -21,7 +21,7 @@ resource "aws_iam_role_policy_attachment" "lambda_execution_policy" {
 }
 
 resource "aws_iam_role_policy" "ecr_access_policy" {
-  name = "${var.project_name}-ecr-access-policy"
+  name = "${var.environment}-${var.project_name}-ecr-access-policy"
   role = aws_iam_role.lambda_execution_role.id
 
   policy = jsonencode({
