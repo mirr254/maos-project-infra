@@ -227,3 +227,9 @@ variable "aws_account_id" {
   description = "AWS account ID"
   type        = string
 }
+
+variable "log_retention_in_days" {
+  description = "Number of days to retain log events"
+  type        = number
+  default     = 7
+}

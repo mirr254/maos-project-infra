@@ -12,7 +12,7 @@ resource "aws_api_gateway_resource" "resource" {
 resource "aws_api_gateway_method" "post_method" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.resource.id
-  http_method   = "POST"
+  http_method   = "ANY"
   authorization = "NONE"
 }
 
@@ -38,4 +38,9 @@ resource "aws_lambda_permission" "api_gateway_permission" {
   function_name = aws_lambda_function.maosproject_function.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
+resource "aws_cloudwatch_log_group" "api_gateway_logs" {
+  name              = "/aws/api-gateway/${var.environment}-${var.project_name}"
+  retention_in_days = var.log_retention_in_days
 }
