@@ -49,22 +49,22 @@ variable "project_name" {
   default     = "maosproject"
 
 }
-variable "bastion_ami" {
-  type        = string
-  description = "AMI used to launch bastion host"
-  default     = "ami-038f1ca1bd58a5790"
-}
+# variable "bastion_ami" {
+#   type        = string
+#   description = "AMI used to launch bastion host"
+#   default     = "ami-038f1ca1bd58a5790"
+# }
 
-variable "bastion_instance_type" {
-  type        = string
-  description = "bastion Node/machine type "
-  default     = "t2.micro"
-}
-variable "bastion_sg_name" {
-  type        = string
-  description = "Bastion host security group name"
-  default     = "bastion-22-ssh"
-}
+# variable "bastion_instance_type" {
+#   type        = string
+#   description = "bastion Node/machine type "
+#   default     = "t2.micro"
+# }
+# variable "bastion_sg_name" {
+#   type        = string
+#   description = "Bastion host security group name"
+#   default     = "bastion-22-ssh"
+# }
 
 variable "postges_sg_name" {
   type        = string
@@ -210,4 +210,15 @@ variable "map_users" {
 variable "cluster_name" {
   type        = string
   description = "Name of the cluster to create"
+}
+
+variable "lambda_image_tag" {
+  description = "Tag of the Lambda container image"
+  type        = string
+  default     = "latest"
+}
+
+variable "pulumi_access_token" {
+  description = "Pulumi access token"
+  type        = string
 }

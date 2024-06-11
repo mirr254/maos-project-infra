@@ -1,52 +1,3 @@
-terraform {
-  backend "s3" {}
-}
-module "vpc" {
-
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
-
-  name                 = "${var.environment}-vpc"
-  cidr                 = local.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  instance_tenancy     = "default"
-
-  azs             = local.azs
-  private_subnets = [for k in range(length(local.azs)) : cidrsubnet(local.vpc_cidr, 8, k)]
-  public_subnets  = [for k in range(length(local.azs)) : cidrsubnet(local.vpc_cidr, 8, k + length(local.azs))]
-  intra_subnets   = [for k in range(length(local.azs)) : cidrsubnet(local.vpc_cidr, 8, k + 2 * length(local.azs))]
-
-
-
-  enable_nat_gateway = var.enable_nat_gateway
-  nat_gateway_tags   = var.tags
-  single_nat_gateway = true
-
-  enable_ipv6 = false
-  # public_subnet_assign_ipv6_address_on_creation  = true
-  # private_subnet_assign_ipv6_address_on_creation = true
-  # intra_subnet_assign_ipv6_address_on_creation   = true
-  # public_subnet_ipv6_prefixes                    = range(0, length(local.azs))
-  # private_subnet_ipv6_prefixes                   = range(length(local.azs) * 1, length(local.azs) * 2)
-  # intra_subnet_ipv6_prefixes                     = range(length(local.azs) * 2, length(local.azs) * 3)
-
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = "1"
-  }
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = "1"
-  }
-
-  tags = merge(
-    var.tags,
-    {
-      "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    },
-  )
-
-}
-
 module "eks" {
 
   source                         = "terraform-aws-modules/eks/aws"
@@ -183,27 +134,6 @@ module "eks" {
     }
   }
 
-
-}
-
-resource "aws_iam_policy" "node_additional" {
-  name        = "${local.name}-additional"
-  description = "Example usage of node additional policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ec2:Describe*",
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-    ]
-  })
-
-  tags = var.tags
 }
 
 provider "kubernetes" {
@@ -218,38 +148,4 @@ provider "kubernetes" {
     command     = "aws"
   }
 
-}
-
-module "key_pair" {
-  source  = "terraform-aws-modules/key-pair/aws"
-  version = "~> 2.0.3"
-
-  key_name_prefix    = local.name
-  create_private_key = true
-
-  tags = var.tags
-}
-
-module "ebs_kms_key" {
-  source  = "terraform-aws-modules/kms/aws"
-  version = "~> 3.0.0"
-
-  description = "Customer managed key to encrypt EKS managed node group volumes"
-
-  # Policy
-  key_administrators = [
-    data.aws_caller_identity.current.arn
-  ]
-
-  key_service_roles_for_autoscaling = [
-    # Required for the ASG to manage encrypted volumes for nodes
-    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
-    # Required for the cluster / persistentvolume-controller to create encrypted PVCs
-    module.eks.cluster_iam_role_arn,
-  ]
-
-  # Aliases
-  aliases = ["eks/${var.cluster_name}/ebs"]
-
-  tags = var.tags
 }
